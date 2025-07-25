@@ -1,0 +1,7 @@
+docile-benchmark==0.3.4
+numpy==2.2.4
+pandas==2.2.3
+seqeval==1.2.2
+torch==2.6.0
+tqdm==4.67.1
+transformers==4.50.2
