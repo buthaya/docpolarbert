@@ -42,10 +42,25 @@ The model is then fine-tuned and evaluated on :
 
 ## Citation
 
+```
+@misc{uthayasooriyar2025docpolarbertpretrainedmodeldocument,
+      title={DocPolarBERT: A Pre-trained Model for Document Understanding with Relative Polar Coordinate Encoding of Layout Structures}, 
+      author={Benno Uthayasooriyar and Antoine Ly and Franck Vermet and Caio Corro},
+      year={2025},
+      eprint={2507.08606},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2507.08606}, 
+}
+```
+## Contact
+For help or issues using DocPolarBERT, please email [Benno Uthayasooriyar](https://github.com/buthaya) or submit a GitHub issue.
+
 ## License
+This dataset is released under the MIT License. See [LICENSE](LICENSE) for details.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+The license allows the commercial use, modification, distribution, and private use of the dataset, provided that the original copyright notice and this permission notice are included in all copies or substantial portions of the dataset.
 
-## Contact Information
+The license does not provide any warranty, and the dataset is provided "as is".
 
-For any questions or issues, please open an issue on the GitHub repository.
+The copyright notice and the permission notice shall be included in all copies or substantial portions of the dataset.
