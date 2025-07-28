@@ -44,6 +44,7 @@ We provide the pre-processed datasets in the Hugging Face Datasets format, as we
 | CORD (v2)                     | [https://huggingface.co/datasets/buthaya/cord](https://huggingface.co/datasets/buthaya/cord)         | [https://github.com/clovaai/cord](https://github.com/clovaai/cord) | [https://huggingface.co/buthaya/docpolarbert-cord](https://huggingface.co/buthaya/docpolarbert-cord)     |
 | Docile's (annotated-trainval) | N/A                                                                                                  | [https://github.com/rossumai/docile](https://github.com/rossumai/docile) | [https://huggingface.co/buthaya/docpolarbert-docile](https://huggingface.co/buthaya/docpolarbert-docile) |
 | Payslips                      | [https://huggingface.co/datasets/buthaya/payslips](https://huggingface.co/datasets/buthaya/payslips) | [https://github.com/buthaya/payslips](https://github.com/buthaya/payslips) | [https://huggingface.co/buthaya/docpolarbert-payslips](https://huggingface.co/buthaya/docpolarbert-payslips) |
+
 The Notebooks for fine-tuning and evaluating the model on these datasets are available in the [notebooks](notebooks) directory.
 
 ## Citation
