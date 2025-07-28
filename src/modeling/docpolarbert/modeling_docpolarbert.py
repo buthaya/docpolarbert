@@ -120,7 +120,7 @@ class DocPolarBERTPreTrainedModel(PreTrainedModel):
     """
 
     config_class = DocPolarBERTConfig
-    base_model_prefix = "layoutlmv3"
+    base_model_prefix = "docpolarbert"
 
     def _init_weights(self, module):
         """Initialize the weights"""

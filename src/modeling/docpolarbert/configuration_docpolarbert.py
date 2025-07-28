@@ -74,7 +74,7 @@ class DocPolarBERTConfig(PretrainedConfig):
             The dropout ratio for the classification head.
     """
 
-    model_type = "layoutlmv3"
+    model_type = "docpolarbert"
 
     def __init__(
         self,
