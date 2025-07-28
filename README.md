@@ -13,6 +13,8 @@ Notable differences with existing architectures include:
 - **Self-attention with 2D Relative Positional Encoding in Polar Coordinates**: This allows the model to effectively process the layout of documents in a polar coordinate system, which is particularly useful for documents with complex layouts (invoices, financial documents, forms, etc.).
 - **No vision feature**: The model does not rely on visual features extracted from images, focusing solely on text and layout information.
 
+For more technical details, see the [DocPolarBERT paper on arXiv](https://arxiv.org/abs/2507.08606).
+
 ## Pre-trained Model
 
 | Name           | Huggingface Link                                                                                     |
@@ -30,15 +32,19 @@ Researchers usually run their own OCR on the images, and then pre-train their mo
 This causes different versions of the same dataset to be used by different researchers, which makes it hard to compare results.
 Instead, we use data that comes with publicly available layout annotations, so that we can ensure a fair comparison with other models.
 
+## Fine-tuned Models
 
-The model is then fine-tuned and evaluated on :
-- [FUNSD](https://guillaumejaume.github.io/FUNSD/), 
-- [SROIE](https://rrc.cvc.uab.es/?ch=13), 
-- [CORD (v2)](https://github.com/clovaai/cord), 
-- [Docile's annotated-trainval set](https://github.com/rossumai/docile),
-- Our own [Payslips dataset](https://github.com/buthaya/payslips).
+The model is then fine-tuned and evaluated on the following datasets. \
+We provide the pre-processed datasets in the Hugging Face Datasets format, as well as the fine-tuned models, except for Docile which has to be downloaded through the official link.
 
-
+| Dataset Name                  | 🤗 HF Dataset Link                                                                                   | Official Dataset Link | 🤗 HF Fine-tuned Model Link                                                                              |
+|-------------------------------|------------------------------------------------------------------------------------------------------|-----------------------|----------------------------------------------------------------------------------------------------------|
+| FUNSD                         | [https://huggingface.co/datasets/buthaya/funsd](https://huggingface.co/datasets/buthaya/funsd)       | [https://guillaumejaume.github.io/FUNSD/](https://guillaumejaume.github.io/FUNSD/) | [https://huggingface.co/buthaya/docpolarbert-funsd](https://huggingface.co/buthaya/docpolarbert-funsd)   |
+| SROIE                         | [https://huggingface.co/datasets/buthaya/sroie](https://huggingface.co/datasets/buthaya/sroie)       | [https://rrc.cvc.uab.es/?ch=13](https://rrc.cvc.uab.es/?ch=13) | [https://huggingface.co/buthaya/docpolarbert-sroie](https://huggingface.co/buthaya/docpolarbert-sroie)   |
+| CORD (v2)                     | [https://huggingface.co/datasets/buthaya/cord](https://huggingface.co/datasets/buthaya/cord)         | [https://github.com/clovaai/cord](https://github.com/clovaai/cord) | [https://huggingface.co/buthaya/docpolarbert-cord](https://huggingface.co/buthaya/docpolarbert-cord)     |
+| Docile's (annotated-trainval) | N/A                                                                                                  | [https://github.com/rossumai/docile](https://github.com/rossumai/docile) | [https://huggingface.co/buthaya/docpolarbert-docile](https://huggingface.co/buthaya/docpolarbert-docile) |
+| Payslips                      | [https://huggingface.co/datasets/buthaya/payslips](https://huggingface.co/datasets/buthaya/payslips) | [https://github.com/buthaya/payslips](https://github.com/buthaya/payslips) | [https://huggingface.co/buthaya/docpolarbert-payslips](https://huggingface.co/buthaya/docpolarbert-payslips) |
+The Notebooks for fine-tuning and evaluating the model on these datasets are available in the [notebooks](notebooks) directory.
 
 ## Citation
 
