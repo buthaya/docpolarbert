@@ -1,13 +1,9 @@
-import logging
 import os
 
 import torch
 import json
 import glob
-from tqdm import tqdm
 from torch.utils.data import Dataset
-
-import sys
 
 class TokenClassificationDataset(Dataset):
     def __init__(self, data_dir, tokenizer, pad_token_label_id, mode):

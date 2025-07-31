@@ -1,4 +1,3 @@
-import collections
 import math
 from typing import Optional, Tuple, Union
 import torch
