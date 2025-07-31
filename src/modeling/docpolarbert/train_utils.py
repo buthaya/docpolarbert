@@ -18,7 +18,7 @@ def train_step_token_classification(
     total_loss = 0
 
     preds = []
-    out_label_ids= []
+    out_label_ids = []
 
     for local_step, batch in enumerate(train_dataloader):
         # ------------------------------------ Data preparation ------------------------------------ #
@@ -43,7 +43,6 @@ def train_step_token_classification(
         )
 
         loss = outputs.loss
-        loss = loss   # Normalize loss
         logits = outputs.logits
 
         # Ignore -100 index

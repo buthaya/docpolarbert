@@ -1,27 +1,27 @@
 import math
 from typing import Optional, Tuple, Union
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
 from torch.nn import CrossEntropyLoss
-
-from transformers.activations  import ACT2FN
+from transformers.activations import ACT2FN
 from transformers.modeling_outputs import (
     BaseModelOutput,
     TokenClassifierOutput,
 )
-
 from transformers.modeling_utils import PreTrainedModel
 from transformers.models.layoutlm.modeling_layoutlm import LayoutLMOnlyMLMHead, MaskedLMOutput
 from transformers.pytorch_utils import apply_chunking_to_forward
 from transformers.utils import (
     logging,
 )
+
 from .configuration_docpolarbert import DocPolarBERTConfig
 
-
 logger = logging.get_logger(__name__)
+
 
 class DocPolarBERTTextEmbeddings(nn.Module):
     """
@@ -75,12 +75,12 @@ class DocPolarBERTTextEmbeddings(nn.Module):
         return position_ids.unsqueeze(0).expand(input_shape)
 
     def forward(
-        self,
-        input_ids=None,
-        bbox=None,
-        token_type_ids=None,
-        position_ids=None,
-        inputs_embeds=None,
+            self,
+            input_ids=None,
+            bbox=None,
+            token_type_ids=None,
+            position_ids=None,
+            inputs_embeds=None,
     ):
         if position_ids is None:
             if input_ids is not None:
@@ -178,14 +178,14 @@ class DocPolarBERTSelfAttention(nn.Module):
         return nn.Softmax(dim=-1)(new_attention_scores)
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask=None,
-        head_mask=None,
-        output_attentions=False,
-        rel_pos=None,
-        rel_2d_pos=None,
-        rel_2d_angle=None,
+            self,
+            hidden_states,
+            attention_mask=None,
+            head_mask=None,
+            output_attentions=False,
+            rel_pos=None,
+            rel_2d_pos=None,
+            rel_2d_angle=None,
     ):
         """
         # B = Batch size, S = Sequence Length, N = Number of attention heads, H = Size of each head
@@ -201,16 +201,17 @@ class DocPolarBERTSelfAttention(nn.Module):
         :return:
         """
 
-        mixed_query_layer = self.query(hidden_states) # (B, S_q, N*H)
+        mixed_query_layer = self.query(hidden_states)  # (B, S_q, N*H)
 
-        key_layer = self.transpose_for_scores(self.key(hidden_states)) # (B, N, S_q, H)
-        value_layer = self.transpose_for_scores(self.value(hidden_states)) # (B, N, S_k, H)
-        query_layer = self.transpose_for_scores(mixed_query_layer) # (B, N, S_v, H)
+        key_layer = self.transpose_for_scores(self.key(hidden_states))  # (B, N, S_q, H)
+        value_layer = self.transpose_for_scores(self.value(hidden_states))  # (B, N, S_k, H)
+        query_layer = self.transpose_for_scores(mixed_query_layer)  # (B, N, S_v, H)
 
         # Take the dot product between "query" and "key" to get the raw attention scores.
         # The attention scores QT K/√d could be significantly larger than input elements, and result in overflow.
         # Changing the computational order into QT(K/√d) alleviates the problem. (https://arxiv.org/pdf/2105.13290.pdf)
-        attention_scores_1 = torch.matmul(query_layer / math.sqrt(self.attention_head_size), key_layer.transpose(-1, -2))
+        attention_scores_1 = torch.matmul(query_layer / math.sqrt(self.attention_head_size),
+                                          key_layer.transpose(-1, -2))
 
         # intialize zeros relative attention_scores
         attention_scores_rel_1D = 0
@@ -222,24 +223,27 @@ class DocPolarBERTSelfAttention(nn.Module):
             # 'bnsh, nskh -> bnsk' indicates:
             # b: batch, n: head, s: sequence positions, h: head dimension k: sequence positions for keys
             # Resulting attn: (B, N, S_q, S_k)
-            attention_scores_rel_1D = torch.einsum('bnsh, bskh -> bnsk', query_layer / math.sqrt(self.attention_head_size),
-                                              rel_pos)
+            attention_scores_rel_1D = torch.einsum('bnsh, bskh -> bnsk',
+                                                   query_layer / math.sqrt(self.attention_head_size),
+                                                   rel_pos)
 
         if self.has_spatial_attention_bias:
             # Compute the 2D-relative position attention scores using einsum for efficient batching
             # 'bnsh, bskh -> bnsk' indicates:
             # b: batch, n: head, s: sequence positions, h: head dimension k: sequence positions for keys
             # Resulting attn: (B, N, S_q, S_k)
-            attention_scores_rel_2D = torch.einsum('bnsh, bskh -> bnsk', query_layer / math.sqrt(self.attention_head_size),
-                                              rel_2d_pos)
+            attention_scores_rel_2D = torch.einsum('bnsh, bskh -> bnsk',
+                                                   query_layer / math.sqrt(self.attention_head_size),
+                                                   rel_2d_pos)
 
         if self.has_angle_attention_bias:
             # Compute the 2D-relative angle attention scores using einsum for efficient batching
             # 'bnsh, bskh -> bnsk' indicates:
             # b: batch, n: head, s: sequence positions, h: head dimension k: sequence positions for keys
             # Resulting attn: (B, N, S_q, S_k)
-            attention_scores_rel_angle = torch.einsum('bnsh, bskh -> bnsk', query_layer / math.sqrt(self.attention_head_size),
-                                              rel_2d_angle)
+            attention_scores_rel_angle = torch.einsum('bnsh, bskh -> bnsk',
+                                                      query_layer / math.sqrt(self.attention_head_size),
+                                                      rel_2d_angle)
         # Sum the 1D, 2D and angle relative position scores to the query-key attention scores
         attention_scores = attention_scores_1 + attention_scores_rel_1D + attention_scores_rel_2D + attention_scores_rel_angle
 
@@ -293,14 +297,14 @@ class DocPolarBERTAttention(nn.Module):
         self.output = DocPolarBERTSelfOutput(config)
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask=None,
-        head_mask=None,
-        output_attentions=False,
-        rel_pos=None,
-        rel_2d_pos=None,
-        rel_2d_angle=None,
+            self,
+            hidden_states,
+            attention_mask=None,
+            head_mask=None,
+            output_attentions=False,
+            rel_pos=None,
+            rel_2d_pos=None,
+            rel_2d_angle=None,
     ):
         self_outputs = self.self(
             hidden_states,
@@ -327,14 +331,14 @@ class DocPolarBERTLayer(nn.Module):
         self.output = DocPolarBERTOutput(config)
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask=None,
-        head_mask=None,
-        output_attentions=False,
-        rel_pos=None,
-        rel_2d_pos=None,
-        rel_2d_angle=None,
+            self,
+            hidden_states,
+            attention_mask=None,
+            head_mask=None,
+            output_attentions=False,
+            rel_pos=None,
+            rel_2d_pos=None,
+            rel_2d_angle=None,
     ):
         self_attention_outputs = self.attention(
             hidden_states,
@@ -382,10 +386,12 @@ class DocPolarBERTEncoder(nn.Module):
             self.rel_2d_pos_bins = config.rel_2d_pos_bins
             self.rel_2d_angle_bins = config.rel_2d_angle_bins
             # self.rel_2d_pos_bins + 2 for 0 and padding_idx
-            self.rel_pos_2D_embedding = nn.Embedding(self.rel_2d_pos_bins +2, self.attention_head_size, padding_idx=self.rel_2d_pos_bins+1)
+            self.rel_pos_2D_embedding = nn.Embedding(self.rel_2d_pos_bins + 2, self.attention_head_size,
+                                                     padding_idx=self.rel_2d_pos_bins + 1)
             # self.rel_2d_angle_bins + 2 for 0
             # padding_idx = self.rel_2d_angle_bins+4+1 because we have 4 special cases for angles close to the axes
-            self.rel_pos_angle_embedding = nn.Embedding(self.rel_2d_angle_bins + 4 + 2, self.attention_head_size, padding_idx=self.rel_2d_angle_bins+4+1)
+            self.rel_pos_angle_embedding = nn.Embedding(self.rel_2d_angle_bins + 4 + 2, self.attention_head_size,
+                                                        padding_idx=self.rel_2d_angle_bins + 4 + 1)
 
     def relative_position_bucket(self, relative_position, bidirectional=True, num_buckets=32, max_distance=128):
         ret = 0
@@ -403,7 +409,7 @@ class DocPolarBERTEncoder(nn.Module):
 
         # The other half of the buckets are for logarithmically bigger bins in positions up to max_distance
         val_if_large = max_exact + (
-            torch.log(n.float() / max_exact) / math.log(max_distance / max_exact) * (num_buckets - max_exact)
+                torch.log(n.float() / max_exact) / math.log(max_distance / max_exact) * (num_buckets - max_exact)
         ).to(torch.long)
         val_if_large = torch.min(val_if_large, torch.full_like(val_if_large, num_buckets - 1))
 
@@ -458,7 +464,6 @@ class DocPolarBERTEncoder(nn.Module):
         distances[mask] = bucketized[mask]
 
         return distances.to(torch.long)
-
 
     def group_angles(self, bbox, angles, num_quadrants, padding_value):
         """
@@ -538,7 +543,7 @@ class DocPolarBERTEncoder(nn.Module):
         # Get the mask in [512, 512] shape
         mask = mask.unsqueeze(1) | mask.unsqueeze(2)
         # Set the distances between padding boxes to 0
-        padding_value = self.rel_2d_pos_bins+1
+        padding_value = self.rel_2d_pos_bins + 1
         dist[mask] = padding_value
 
         rel_pos_2D = self.group_distances(dist, num_buckets=self.rel_2d_pos_bins, padding_value=padding_value)
@@ -567,28 +572,28 @@ class DocPolarBERTEncoder(nn.Module):
         # Get the mask in [512, 512] shape
         mask = mask.unsqueeze(1) | mask.unsqueeze(2)
         # Set the distances between padding boxes to 0
-        padding_value = self.rel_2d_angle_bins+5
+        padding_value = self.rel_2d_angle_bins + 5
         angles[mask] = padding_value
-        rel_2d_angle = self.group_angles(bbox, angles, num_quadrants=self.rel_2d_angle_bins, padding_value=padding_value)
+        rel_2d_angle = self.group_angles(bbox, angles, num_quadrants=self.rel_2d_angle_bins,
+                                         padding_value=padding_value)
         rel_2d_angle = self.rel_pos_angle_embedding(rel_2d_angle)
         rel_2d_angle = rel_2d_angle.to(torch.float32)
         rel_2d_angle = rel_2d_angle.contiguous()
         return rel_2d_angle
 
     def forward(
-        self,
-        hidden_states,
-        bbox=None,
-        attention_mask=None,
-        head_mask=None,
-        output_attentions=False,
-        output_hidden_states=False,
-        return_dict=True,
-        position_ids=None,
-        patch_height=None,
-        patch_width=None,
+            self,
+            hidden_states,
+            bbox=None,
+            attention_mask=None,
+            head_mask=None,
+            output_attentions=False,
+            output_hidden_states=False,
+            return_dict=True,
+            position_ids=None,
+            patch_height=None,
+            patch_width=None,
     ):
-        device = hidden_states.device
         all_hidden_states = () if output_hidden_states else None
         all_self_attentions = () if output_attentions else None
         rel_pos = self._cal_1d_pos_emb(position_ids) if self.has_relative_attention_bias else None
@@ -619,7 +624,7 @@ class DocPolarBERTEncoder(nn.Module):
                     output_attentions,
                     rel_pos=rel_pos,
                     rel_2d_pos=rel_2d_pos,
-                    rel_2d_angle = rel_2d_angle
+                    rel_2d_angle=rel_2d_angle
                 )
 
             hidden_states = layer_outputs[0]
@@ -749,18 +754,18 @@ class DocPolarBERTModel(DocPolarBERTPreTrainedModel):
         return embeddings
 
     def forward(
-        self,
-        input_ids: Optional[torch.LongTensor] = None,
-        bbox: Optional[torch.LongTensor] = None,
-        attention_mask: Optional[torch.FloatTensor] = None,
-        token_type_ids: Optional[torch.LongTensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        head_mask: Optional[torch.FloatTensor] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        pixel_values: Optional[torch.FloatTensor] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
+            self,
+            input_ids: Optional[torch.LongTensor] = None,
+            bbox: Optional[torch.LongTensor] = None,
+            attention_mask: Optional[torch.FloatTensor] = None,
+            token_type_ids: Optional[torch.LongTensor] = None,
+            position_ids: Optional[torch.LongTensor] = None,
+            head_mask: Optional[torch.FloatTensor] = None,
+            inputs_embeds: Optional[torch.FloatTensor] = None,
+            pixel_values: Optional[torch.FloatTensor] = None,
+            output_attentions: Optional[bool] = None,
+            output_hidden_states: Optional[bool] = None,
+            return_dict: Optional[bool] = None,
     ) -> Union[Tuple, BaseModelOutput]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
@@ -869,11 +874,12 @@ class DocPolarBERTClassificationHead(nn.Module):
         x = self.out_proj(x)
         return x
 
+
 class PredictionHead(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.hidden_size = config.hidden_size
-        self.num_positions = 11 # Number of max positions to predict (from 0 to 10)
+        self.num_positions = 11  # Number of max positions to predict (from 0 to 10)
         self.position_predictor = nn.Linear(config.hidden_size, self.num_positions)
 
     def forward(
@@ -915,20 +921,20 @@ class DocPolarBERTForMaskedLM(DocPolarBERTPreTrainedModel):
         self.post_init()
 
     def forward(
-        self,
-        input_ids=None,
-        bbox=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        masked_position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        labels=None,
-        labels_pos_ids=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            bbox=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            masked_position_ids=None,
+            head_mask=None,
+            inputs_embeds=None,
+            labels=None,
+            labels_pos_ids=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
@@ -972,7 +978,7 @@ class DocPolarBERTForMaskedLM(DocPolarBERTPreTrainedModel):
         loss_pos = None
         if labels_pos_ids is not None:
             loss_pos, _ = self.position_predictor(sequence_output, masked_position_ids, labels_pos_ids)
-        final_loss = masked_lm_loss+self.pos_coeff*loss_pos
+        final_loss = masked_lm_loss + self.pos_coeff * loss_pos
         if final_loss is None:
             print('masked_lm_loss:', masked_lm_loss)
             print('prediction_scores:', prediction_scores)
@@ -1009,19 +1015,19 @@ class DocPolarBERTForTokenClassification(DocPolarBERTPreTrainedModel):
         self.init_weights()
 
     def forward(
-        self,
-        input_ids: Optional[torch.LongTensor] = None,
-        bbox: Optional[torch.LongTensor] = None,
-        attention_mask: Optional[torch.FloatTensor] = None,
-        token_type_ids: Optional[torch.LongTensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        head_mask: Optional[torch.FloatTensor] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
-        labels: Optional[torch.LongTensor] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
-        pixel_values: Optional[torch.LongTensor] = None,
+            self,
+            input_ids: Optional[torch.LongTensor] = None,
+            bbox: Optional[torch.LongTensor] = None,
+            attention_mask: Optional[torch.FloatTensor] = None,
+            token_type_ids: Optional[torch.LongTensor] = None,
+            position_ids: Optional[torch.LongTensor] = None,
+            head_mask: Optional[torch.FloatTensor] = None,
+            inputs_embeds: Optional[torch.FloatTensor] = None,
+            labels: Optional[torch.LongTensor] = None,
+            output_attentions: Optional[bool] = None,
+            output_hidden_states: Optional[bool] = None,
+            return_dict: Optional[bool] = None,
+            pixel_values: Optional[torch.LongTensor] = None,
     ) -> Union[Tuple, TokenClassifierOutput]:
         r"""
         labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
@@ -1068,4 +1074,3 @@ class DocPolarBERTForTokenClassification(DocPolarBERTPreTrainedModel):
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
-
