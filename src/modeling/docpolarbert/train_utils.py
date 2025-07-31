@@ -79,15 +79,15 @@ def eval_token_classification(
     nb_eval_steps = 0
     preds = []
     out_label_ids = []
-
+    device = next(model.parameters()).device
     iterator = eval_dataloader
     for batch in iterator:
         with torch.no_grad():
-            input_ids = batch["input_ids"].to(model.device, non_blocking=True)
-            attention_mask = batch["attention_mask"].to(model.device, non_blocking=True)
-            token_type_ids = batch["token_type_ids"].to(model.device, non_blocking=True)
-            labels = batch["labels"].to(model.device, non_blocking=True)
-            bbox = batch["bbox"].to(model.device, non_blocking=True)
+            input_ids = batch["input_ids"].to(device, non_blocking=True)
+            attention_mask = batch["attention_mask"].to(device, non_blocking=True)
+            token_type_ids = batch["token_type_ids"].to(device, non_blocking=True)
+            labels = batch["labels"].to(device, non_blocking=True)
+            bbox = batch["bbox"].to(device, non_blocking=True)
 
             # ------------------------------------ Forward pass ------------------------------------ #
             outputs = model(
@@ -114,14 +114,14 @@ def eval_token_classification(
             valid_labels = labels.masked_select(mask)
 
             total_loss += loss.sum()
-            nb_eval_steps += max(1, torch.cuda.device_count())
+            nb_eval_steps += 1
 
             preds.append([idx2label[p.item()] for p in valid_preds])
             out_label_ids.append([idx2label[l.item()] for l in valid_labels])
 
-            precision = precision_score(out_label_ids, preds)
-            recall = recall_score(out_label_ids, preds)
-            f1 = f1_score(out_label_ids, preds)
+    precision = precision_score(out_label_ids, preds)
+    recall = recall_score(out_label_ids, preds)
+    f1 = f1_score(out_label_ids, preds)
 
     # compute average evaluation loss
     avg_loss = (total_loss / nb_eval_steps).item()
