@@ -1,3 +1,5 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 # DocPolarBERT
 
 **Multimodal (Text + Layout) pre-training for Document AI**
